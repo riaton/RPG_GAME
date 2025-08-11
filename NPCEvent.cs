@@ -1,0 +1,11 @@
+using UnityEngine;
+
+[CreateAssetMenu(menuName = "MassEvent/NPC Event")]
+public class NPCEvent : MassEvent
+{
+    [TextArea(3, 15)]public string Message;
+    public override void Exec(RPGSceneManager manager)
+    {
+        manager.ShowMessageWindow(Message);
+    }
+}
