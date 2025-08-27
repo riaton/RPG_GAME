@@ -1,6 +1,8 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
- 
+
 public class MenuRoot : MonoBehaviour
 {
     bool _isActive;
@@ -13,7 +15,7 @@ public class MenuRoot : MonoBehaviour
             UpdateMenuItemSelecting(!_isActive);
         }
     }
- 
+
     int _index;
     public int Index
     {
@@ -27,7 +29,7 @@ public class MenuRoot : MonoBehaviour
         set
         {
             _index = value;
- 
+
             var items = MenuItems;
             _index = Mathf.Clamp(_index, 0, ActiveItemCount - 1);
             UpdateMenuItemSelecting(false);
@@ -37,7 +39,7 @@ public class MenuRoot : MonoBehaviour
             }
         }
     }
- 
+
     public MenuItem CurrentItem
     {
         get
@@ -45,23 +47,23 @@ public class MenuRoot : MonoBehaviour
             return MenuItems[Index];
         }
     }
- 
+
     MenuItem[] _menuItems;
     public MenuItem[] MenuItems
     {
         get => _menuItems != null ? _menuItems : (_menuItems = GetComponentsInChildren<MenuItem>());
     }
- 
+
     public void RefreshMenuItems(MenuItem[] menuItems)
     {
         _menuItems = menuItems;
     }
- 
+
     public int ActiveItemCount
     {
         get => MenuItems.Count(_i => _i.gameObject.activeSelf);
     }
- 
+
     void UpdateMenuItemSelecting(bool allDeactive)
     {
         var items = GetComponentsInChildren<MenuItem>();
@@ -70,7 +72,7 @@ public class MenuRoot : MonoBehaviour
             items[i].IsSelecting = allDeactive ? false : i == _index;
         }
     }
- 
+
     private void Awake()
     {
         UpdateMenuItemSelecting(true);

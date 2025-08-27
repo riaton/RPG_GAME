@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -10,13 +12,14 @@ public class MoveMapEvent : MassEvent
 
     public override void Exec(RPGSceneManager manager)
     {
+        var saveData = Object.FindObjectOfType<SaveData>();
+        saveData.SaveTemporary(manager.ActiveMap);
         Object.Destroy(manager.ActiveMap.gameObject);
         manager.ActiveMap = Object.Instantiate(MoveMapPrefab);
 
-        Debug.Log(manager.ActiveMap.ToString());
-
         if (manager.ActiveMap.FindMassEventPos(StartPosTile, out var pos))
         {
+            Debug.Log(pos);
             manager.Player.SetPosNoCoroutine(pos);
             manager.Player.CurrentDir = StartDirection;
         }

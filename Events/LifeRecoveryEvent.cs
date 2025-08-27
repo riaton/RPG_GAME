@@ -1,16 +1,18 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
- 
+
 [CreateAssetMenu(menuName = "MassEvent/Life Recovery Event")]
 public class LifeRecoveryEvent : MassEvent
 {
     [TextArea(3, 15)] public string Message;
     [Min(0)] public int Money = 50;
- 
+
     [TextArea(3, 15)] public string RecoveryMessage;
     [TextArea(3, 15)] public string NotEnoughMoneyMessage;
     [TextArea(3, 15)] public string NoMessage;
- 
- 
+
+
     public override void Exec(RPGSceneManager manager)
     {
         var messageWindow = manager.MessageWindow;
@@ -22,7 +24,7 @@ public class LifeRecoveryEvent : MassEvent
             {
                 param.HP = param.MaxHP;
                 param.Money -= Money;
- 
+
                 messageWindow.Params = new string[] { param.HP.ToString(), param.Money.ToString() };
                 messageWindow.StartMessage(RecoveryMessage);
             }
@@ -32,13 +34,13 @@ public class LifeRecoveryEvent : MassEvent
                 messageWindow.StartMessage(NotEnoughMoneyMessage);
             }
         };
- 
+
         yesNoMenu.NoAction = () =>
         {
             messageWindow.Params = null;
             messageWindow.StartMessage(NoMessage);
         };
- 
+
         messageWindow.Params = new string[] { Money.ToString() };
         manager.ShowMessageWindow(Message);
     }

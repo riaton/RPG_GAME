@@ -1,18 +1,22 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
- 
+using UnityEngine.UI;
+using System.Linq;
+
 public class Menu : MonoBehaviour
 {
     public MenuRoot FirstMenuRoot;
-    public bool EnableInput { get; set; } = true;
+
     public bool DoOpen { get => gameObject.activeSelf; }
+
+    public bool EnableInput { get; set; } = true;
     public virtual void Open()
     {
         gameObject.SetActive(true);
         StartCoroutine(UpdateWhenOpen());
     }
- 
+
     public virtual void Close()
     {
         while (_menuRootStack.Count > 0)
@@ -21,17 +25,17 @@ public class Menu : MonoBehaviour
             _menuRootStack.Pop();
         }
     }
- 
+
     protected virtual void Awake()
     {
         gameObject.SetActive(false);
     }
- 
+
     public MenuRoot CurrentMenuObj
     {
         get => _menuRootStack.Peek();
     }
- 
+
     public MenuItem CurrentItem
     {
         get
@@ -40,9 +44,9 @@ public class Menu : MonoBehaviour
             return top.CurrentItem;
         }
     }
- 
+
     Stack<MenuRoot> _menuRootStack;
- 
+
     IEnumerator UpdateWhenOpen()
     {
         EnableInput = true;
@@ -51,22 +55,22 @@ public class Menu : MonoBehaviour
         {
             root.IsActive = false;
         }
- 
+
         _menuRootStack = new Stack<MenuRoot>();
         _menuRootStack.Push(FirstMenuRoot);
         FirstMenuRoot.IsActive = true;
- 
+
         yield return null;
- 
+
         while (0 < _menuRootStack.Count)
         {
             var current = _menuRootStack.Peek();
-            if (Input.GetKeyDown(KeyCode.UpArrow))
+            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.LeftArrow))
             {
                 current.Index--;
                 ChangeMenuItem(current);
             }
-            else if (Input.GetKeyDown(KeyCode.DownArrow))
+            else if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.RightArrow))
             {
                 current.Index++;
                 ChangeMenuItem(current);
@@ -83,10 +87,10 @@ public class Menu : MonoBehaviour
         }
         gameObject.SetActive(false);
     }
- 
+
     protected virtual void ChangeMenuItem(MenuRoot menuRoot)
     { }
- 
+
     protected virtual void Decide(MenuRoot current)
     {
         var item = current.CurrentItem;
@@ -113,7 +117,7 @@ public class Menu : MonoBehaviour
                 break;
         }
     }
- 
+
     protected virtual void Cancel(MenuRoot current)
     {
         current.IsActive = false;

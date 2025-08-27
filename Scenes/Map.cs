@@ -1,39 +1,119 @@
-﻿using System.Collections.Generic;
+﻿using GlobalSaveData = SaveData;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Tilemaps;
-using System.Linq;
 
 public class Map : MonoBehaviour
 {
     public Grid Grid { get => GetComponent<Grid>(); }
     Dictionary<string, Tilemap> _tilemaps;
-    HashSet<CharacterBase> _characters = new();
 
     readonly static string BACKGROND_TILEMAP_NAME = "Background";
     readonly static string NONE_OBJECTS_TILEMAP_NAME = "NoneObjects";
     readonly static string OBJECTS_TILEMAP_NAME = "Objects";
     readonly static string EVENT_BOX_TILEMAP_NAME = "EventBox";
 
-    [SerializeField] List<MassEvent> _eventChips;
-    public MassEvent FindMassEvent(TileBase tile)
+    [SerializeField] List<MassEvent> _massEvents;
+
+    HashSet<CharacterBase> _characters = new HashSet<CharacterBase>();
+
+    public RandomEncount RandomEncount;
+    [System.Serializable]
+    public class InstantSaveData{
+        public List<string> characters = new List<string>();
+    }
+    public InstantSaveData GetInstantSaveData(){
+        var saveData = new InstantSaveData();
+        saveData.characters = _characters.Select(_c => _c.GetInstantSaveData()).Where(_s => _s != null).Select(_s => JsonUtility.ToJson(_s)).ToList();
+        return saveData;
+    }
+    public CharacterBase GetCharacterId(string id)
     {
-        return _eventChips.Find(_c => _c.Tile == tile);
+        return _characters.FirstOrDefault(_c => _c.IdentityKey == id);
     }
 
-    public void AddCharacter(CharacterBase character){
-        if(!_characters.Contains(character) && character != null){
+    private void Start()
+    {
+        var saveData = Object.FindObjectOfType<GlobalSaveData>();
+        saveData.LoadSaveData(this);
+    }
+
+    public void Load(InstantSaveData saveData)
+    {
+        if (saveData.characters != null)
+        {
+ 
+            foreach (var json in saveData.characters)
+            {
+                var data = JsonUtility.FromJson<CharacterBase.SaveData>(json);
+                if (data == null) continue;
+ 
+                var ch = GetCharacterId(data.id);
+                if (ch != null)
+                {
+                    ch.LoadInstantSaveData(json);
+                }
+                else
+                {
+                    Debug.LogError($"Don't found character={data.id}....");
+                }
+            }
+        }
+    }
+ 
+    public void Load(SaveData saveData)
+    {
+        if(saveData.characters != null)
+        {
+            foreach (var json in saveData.characters)
+            {
+                var data = JsonUtility.FromJson<CharacterBase.SaveData>(json);
+                if (data == null) continue;
+ 
+                var ch = GetCharacterId(data.id);
+                if (ch != null)
+                {
+                    ch.LoadSaveData(json);
+                }
+                else
+                {
+                    Debug.LogError($"Don't found character={data.id}...");
+                }
+            }
+        }
+    }
+
+    [System.Serializable]
+    public class SaveData{
+        public List<string> characters = new List<string>();
+    }
+    public SaveData GetSaveData(){
+        var saveData = new SaveData();
+        saveData.characters = _characters.Where(_c => !(_c is Player)).Select(_c => _c.GetSaveData()).Where(_s => _s != null).Select(_s => JsonUtility.ToJson(_s)).ToList();
+        return saveData;
+    }
+    public void AddCharacter(CharacterBase character)
+    {
+        if (!_characters.Contains(character) && character != null)
+        {
             _characters.Add(character);
         }
     }
 
-    public CharacterBase GetCharacter(Vector3Int pos){
-        return _characters.FirstOrDefault(_c => _c.Pos == pos);
+    public CharacterBase GetCharacter(Vector3Int pos)
+    {
+        return _characters.Where(_c => _c.IsActive).FirstOrDefault(_c => _c.Pos == pos);
     }
 
+    public MassEvent FindMassEvent(TileBase tile)
+    {
+        return _massEvents.Find(_c => _c.Tile == tile);
+    }
     public bool FindMassEventPos(TileBase tile, out Vector3Int pos)
     {
         var eventLayer = _tilemaps[EVENT_BOX_TILEMAP_NAME];
-        Debug.Log(_tilemaps.Count);
         var renderer = eventLayer.GetComponent<Renderer>();
         var min = eventLayer.LocalToCell(renderer.bounds.min);
         var max = eventLayer.LocalToCell(renderer.bounds.max);
@@ -55,11 +135,14 @@ public class Map : MonoBehaviour
         foreach (var tilemap in Grid.GetComponentsInChildren<Tilemap>())
         {
             _tilemaps.Add(tilemap.name, tilemap);
+            var renderer = tilemap.GetComponent<Renderer>();
+            var minCellPos = tilemap.LocalToCell(renderer.bounds.min);
+            var maxCellPos = tilemap.LocalToCell(renderer.bounds.max);
         }
 
         //EventBoxを非表示にする
         _tilemaps[EVENT_BOX_TILEMAP_NAME].gameObject.SetActive(false);
-        
+
         AddCharacter(Object.FindObjectOfType<Player>());
     }
 
@@ -82,7 +165,7 @@ public class Map : MonoBehaviour
         mass.isMovable = true;
         mass.character = GetCharacter(pos);
 
-        if(mass.character != null)
+        if (mass.character != null)
         {
             mass.isMovable = false;
         }

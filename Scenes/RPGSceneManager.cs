@@ -1,64 +1,152 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class RPGSceneManager : MonoBehaviour
 {
-    public ItemShopMenu ItemShopMenu;
+    public TitleMenu TitleMenu;
     public Player Player;
+    public Vector3Int MassEventPos{get; private set;}
     public Map ActiveMap;
+    public ItemList ItemList;
     public MessageWindow MessageWindow;
+    public Menu Menu;
+    public ItemShopMenu ItemShopMenu;
+    [SerializeField, TextArea(3, 5)]string GameOverMessage = "体力がなくなった";
+    [SerializeField]Map RespawnMapPrefab;
+    [SerializeField]Vector3Int RespawnPos;
 
     Coroutine _currentCoroutine;
+
+    [SerializeField] public BattleWindow BattleWindow;
+
+    // Start is called before the first frame update
     void Start()
     {
-        _currentCoroutine = StartCoroutine(MovePlayer());
-    }
-    public Menu Menu;
-    public void OpenMenu(){
-        Menu.Open();
+        StartTitle();
     }
 
-    public void ShowMessageWindow(string message)
-    {
-        MessageWindow.StartMessage(message);
+    public void StartTitle(){
+        StopCurrentCoroutine();
+        Player.gameObject.SetActive(false);
+        if(ActiveMap != null) ActiveMap.gameObject.SetActive(false);
+        TitleMenu.Open();
     }
-    public bool IsPauseScene
-    {
-        get
-        {
-            return !MessageWindow.IsEndMessage || Menu.DoOpen || ItemShopMenu.DoOpen;
+
+    public void StartGame(){
+        StopCurrentCoroutine();
+        TitleMenu.Close();
+        Player.gameObject.SetActive(true);
+        if(ActiveMap != null) ActiveMap.gameObject.SetActive(true);
+        _currentCoroutine = StartCoroutine(MovePlayer());
+    }
+
+    void StopCurrentCoroutine(){
+        if(_currentCoroutine != null){
+            StopCoroutine(_currentCoroutine);
+            _currentCoroutine = null;
         }
+    }
+    
+    IEnumerator GameOver()
+    {
+        MessageWindow.StartMessage(GameOverMessage);
+        yield return new WaitUntil(() => MessageWindow.IsEndMessage);
+ 
+        RespawnMap(true);
+    }
+ 
+    void RespawnMap(bool isGameOver)
+    {
+        Object.Destroy(ActiveMap.gameObject);
+        ActiveMap = Object.Instantiate(RespawnMapPrefab);
+ 
+        Player.SetPosNoCoroutine(RespawnPos);
+        Player.CurrentDir = Direction.Down;
+        if(isGameOver)
+        {
+            Player.BattleParameter.HP = 1;
+            Player.BattleParameter.Money = 100;
+        }
+ 
+        if(_currentCoroutine != null)
+        {
+            StopCoroutine(_currentCoroutine);
+        }
+        _currentCoroutine = StartCoroutine(MovePlayer());
     }
 
     IEnumerator MovePlayer()
     {
-        while(true)
+        while (true)
         {
             if (GetArrowInput(out var move))
             {
                 var movedPos = Player.Pos + move;
                 var massData = ActiveMap.GetMassData(movedPos);
                 Player.SetDir(move);
-                if(massData.isMovable)
+                if (massData.isMovable)
                 {
                     Player.Pos = movedPos;
                     yield return new WaitWhile(() => Player.IsMoving);
- 
-                    if(massData.massEvent != null)
+
+                    if (massData.massEvent != null)
                     {
+                        MassEventPos = movedPos;
                         massData.massEvent.Exec(this);
                     }
+
+                    else if (ActiveMap.RandomEncount != null)
+                    {
+                        var rnd = new System.Random();
+                        var encount = ActiveMap.RandomEncount.Encount(rnd);
+                        if (encount != null)
+                        {
+                            BattleWindow.SetUseEncounter(encount);
+                            BattleWindow.Open();
+                        }
+                    }
+
                 }
-                else if(massData.character != null && massData.character.Event != null)
+                else if (massData.character != null && massData.character.Event != null)
                 {
+                    MassEventPos = movedPos;
                     massData.character.Event.Exec(this);
                 }
             }
             yield return new WaitWhile(() => IsPauseScene);
-            if(Input.GetKeyDown(KeyCode.Space)){
+            if(Player.BattleParameter.HP <= 0){
+                StartCoroutine(GameOver());
+                yield break;
+            }
+
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
                 OpenMenu();
             }
+
+            if(Input.GetKeyDown(KeyCode.A)){
+                Debug.Log("a was down");
+                GameClear();
+            }
         }
+    }
+
+    public void GameClear(){
+        StopCoroutine(_currentCoroutine);
+        _currentCoroutine = StartCoroutine(GameClearCoroutine());
+    }
+
+    [SerializeField, TextArea(3, 15)]string GameClearMessage = "ゲームクリアー";
+    [SerializeField]GameClear gameClearObj;
+    IEnumerator GameClearCoroutine(){
+        MessageWindow.StartMessage(GameClearMessage);
+        yield return new WaitUntil(() => MessageWindow.IsEndMessage);
+        gameClearObj.StartMessage(gameClearObj.Message);
+        yield return new WaitWhile(() => gameClearObj.DoOpen);
+
+        _currentCoroutine = null;
+        RespawnMap(false);
     }
 
     bool GetArrowInput(out Vector3Int move)
@@ -82,5 +170,23 @@ public class RPGSceneManager : MonoBehaviour
             move.y -= 1; doMove = true;
         }
         return doMove;
+    }
+
+    public void ShowMessageWindow(string message)
+    {
+        MessageWindow.StartMessage(message);
+    }
+
+    public bool IsPauseScene
+    {
+        get
+        {
+            return !MessageWindow.IsEndMessage || Menu.DoOpen || ItemShopMenu.DoOpen || BattleWindow.DoOpen;
+        }
+    }
+
+    public void OpenMenu()
+    {
+        Menu.Open();
     }
 }
