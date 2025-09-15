@@ -43,8 +43,8 @@ public class SaveData : MonoBehaviour
  
         DeleteTemporarySaveDatas();
  
-        Object.Destroy(manager.ActiveMap.gameObject);
-        manager.ActiveMap = Object.Instantiate(loadMap);
+        Object.Destroy(manager.CurrentMap.gameObject);
+        manager.CurrentMap = Object.Instantiate(loadMap);
  
         yield return null;
  
@@ -52,10 +52,10 @@ public class SaveData : MonoBehaviour
         player.LoadSaveData(PlayerPrefs.GetString("player"));
  
         var instantMapData = JsonUtility.FromJson<Map.InstantSaveData>(PlayerPrefs.GetString("instantMapData"));
-        manager.ActiveMap.Load(instantMapData);
+        manager.CurrentMap.Load(instantMapData);
  
         var mapData = JsonUtility.FromJson<Map.SaveData>(PlayerPrefs.GetString($"map_{mapName}"));
-        manager.ActiveMap.Load(mapData);
+        manager.CurrentMap.Load(mapData);
         NowLoading = false;
         IsSuccessLoad = true;
     }
@@ -95,19 +95,19 @@ public class SaveData : MonoBehaviour
     public void Save(RPGSceneManager manager)
     {
         PlayerPrefs.SetString("player", JsonUtility.ToJson(manager.Player.GetSaveData()));
-        var mapName = manager.ActiveMap.name;
+        var mapName = manager.CurrentMap.name;
         mapName = mapName.Replace("(Clone)", "");
         PlayerPrefs.SetString("activeMap", mapName);
-        var instantMapData = manager.ActiveMap.GetInstantSaveData();
+        var instantMapData = manager.CurrentMap.GetInstantSaveData();
         PlayerPrefs.SetString("instantMapData", JsonUtility.ToJson(instantMapData));
 
-        var activeMapKey = $"map_{manager.ActiveMap.name.Replace("(Clone)", "")}";
+        var activeMapKey = $"map_{manager.CurrentMap.name.Replace("(Clone)", "")}";
         foreach (var map in _maps)
         {
             var key = $"map_{map.name.Replace("(Clone)", "")}";
             if(key == activeMapKey)
             {
-                Save(manager.ActiveMap);
+                Save(manager.CurrentMap);
             }
             else
             {

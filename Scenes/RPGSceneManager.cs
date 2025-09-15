@@ -6,7 +6,7 @@ public class RPGSceneManager : MonoBehaviour
     public Player Player;
     Coroutine _currentCoroutine;
     public Vector3Int CurrentEventTilePosition{ get; private set; }
-    public Map ActiveMap;
+    public Map CurrentMap;
     [SerializeField]Map RestartGameMap;
     [SerializeField]Vector3Int RestartGamePosition;
     [SerializeField, TextArea(3, 5)]string GameOverMessage;
@@ -35,7 +35,7 @@ public class RPGSceneManager : MonoBehaviour
     public void StartTitle(){
         StopCurrentCoroutine();
         Player.gameObject.SetActive(false);
-        if(ActiveMap != null) ActiveMap.gameObject.SetActive(false);
+        if(CurrentMap != null) CurrentMap.gameObject.SetActive(false);
         TitleWindow.Open();
     }
 
@@ -43,7 +43,7 @@ public class RPGSceneManager : MonoBehaviour
         StopCurrentCoroutine();
         TitleWindow.Close();
         Player.gameObject.SetActive(true);
-        if(ActiveMap != null) ActiveMap.gameObject.SetActive(true);
+        if(CurrentMap != null) CurrentMap.gameObject.SetActive(true);
         _currentCoroutine = StartCoroutine(MovePlayer());
     }
 
@@ -61,7 +61,7 @@ public class RPGSceneManager : MonoBehaviour
             if (GetIsMoveKeyPushed(out var move))
             {
                 var movedPosition = Player.Position + move;
-                var tile = ActiveMap.GetTile(movedPosition);
+                var tile = CurrentMap.GetTile(movedPosition);
                 Player.SetDirection(move);
                 if (tile.isMovable)
                 {
@@ -73,10 +73,10 @@ public class RPGSceneManager : MonoBehaviour
                         CurrentEventTilePosition = movedPosition;
                         tile.tileEvent.Exec(this);
                     }
-                    else if (ActiveMap.MapEncount != null)
+                    else if (CurrentMap.MapEncount != null)
                     {
                         var rnd = new System.Random();
-                        var encount = ActiveMap.MapEncount.EncountJudge(rnd);
+                        var encount = CurrentMap.MapEncount.EncountJudge(rnd);
                         if (encount != null)
                         {
                             BattleWindow.SetUseEncounter(encount);
@@ -165,8 +165,8 @@ public class RPGSceneManager : MonoBehaviour
 
     void RestartGame()
     {
-        Object.Destroy(ActiveMap.gameObject);
-        ActiveMap = Object.Instantiate(RestartGameMap);
+        Object.Destroy(CurrentMap.gameObject);
+        CurrentMap = Object.Instantiate(RestartGameMap);
  
         Player.SetPosNoCoroutine(RestartGamePosition);
         Player.CurrentDirection = Direction.Down;

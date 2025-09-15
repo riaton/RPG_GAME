@@ -36,9 +36,9 @@ public class NPC : MapObjectBase
 
             var movedPos = Position + move;
             SetDirection(move);
-            if (RPGSceneManager.ActiveMap != null)
+            if (RPGSceneManager.CurrentMap != null)
             {
-                var toTile = RPGSceneManager.ActiveMap.GetTile(movedPos);
+                var toTile = RPGSceneManager.CurrentMap.GetTile(movedPos);
                 if (toTile.isMovable)
                 {
                     Position = movedPos;

@@ -8,13 +8,13 @@ public class BossEvent : TileEvent
 
     public override void Exec(RPGSceneManager manager)
     {
-        if(manager.ActiveMap.FindMapObject(manager.CurrentEventTilePosition) == null) return;
+        if(manager.CurrentMap.FindMapObject(manager.CurrentEventTilePosition) == null) return;
         manager.StartCoroutine(Battle(manager));
     }
 
     IEnumerator Battle(RPGSceneManager manager)
     {
-        var Boss = manager.ActiveMap.FindMapObject(manager.CurrentEventTilePosition) as Boss;
+        var Boss = manager.CurrentMap.FindMapObject(manager.CurrentEventTilePosition) as Boss;
         var battleWindow = manager.BattleWindow;
         battleWindow.SetUseEncounter(BossGroup);
         battleWindow.Open();//

@@ -11,11 +11,11 @@ public class MoveMapEvent : TileEvent
     public override void Exec(RPGSceneManager manager)
     {
         //var saveData = Object.FindObjectOfType<SaveData>();
-        //saveData.SaveTemporary(manager.ActiveMap);
-        Object.Destroy(manager.ActiveMap.gameObject);
-        manager.ActiveMap = Object.Instantiate(MapTo);
+        //saveData.SaveTemporary(manager.CurrentMap);
+        Object.Destroy(manager.CurrentMap.gameObject);
+        manager.CurrentMap = Object.Instantiate(MapTo);
 
-        if (manager.ActiveMap.FindTileEventPosition(StartTile, out var pos))
+        if (manager.CurrentMap.FindTileEventPosition(StartTile, out var pos))
         {
             Debug.Log(pos);
             manager.Player.SetPosNoCoroutine(pos);

@@ -36,7 +36,7 @@ public class MapObjectBase : MonoBehaviour
         {
             if (_position == value) return;//
 
-            if (RPGSceneManager.ActiveMap == null)
+            if (RPGSceneManager.CurrentMap == null)
             {
                 _position = value;
             }
@@ -60,7 +60,7 @@ public class MapObjectBase : MonoBehaviour
             _moveCoroutine = null;
         }
         _position = position;
-        transform.position = RPGSceneManager.ActiveMap.Grid.CellToWorld(position);
+        transform.position = RPGSceneManager.CurrentMap.Grid.CellToWorld(position);
         MoveCamera();
     }
     
@@ -97,7 +97,7 @@ public class MapObjectBase : MonoBehaviour
         _position = position;//
 
         var startPos = transform.position;
-        var goalPos = RPGSceneManager.ActiveMap.Grid.CellToWorld(position);
+        var goalPos = RPGSceneManager.CurrentMap.Grid.CellToWorld(position);
         var t = 0f;
         while (t < MoveSecond)
         {
@@ -122,7 +122,7 @@ public class MapObjectBase : MonoBehaviour
         }
         else
         {
-            RPGSceneManager.ActiveMap.AddMapObject(this);
+            RPGSceneManager.CurrentMap.AddMapObject(this);
         }
     }
 
@@ -142,9 +142,9 @@ public class MapObjectBase : MonoBehaviour
 
     protected void OnValidate()
     {
-        if (RPGSceneManager != null && RPGSceneManager.ActiveMap != null)
+        if (RPGSceneManager != null && RPGSceneManager.CurrentMap != null)
         {
-            transform.position = RPGSceneManager.ActiveMap.Grid.CellToWorld(Position);
+            transform.position = RPGSceneManager.CurrentMap.Grid.CellToWorld(Position);
         }
         else if (transform.parent != null)
         {

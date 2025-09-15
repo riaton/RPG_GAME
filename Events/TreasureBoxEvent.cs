@@ -11,13 +11,13 @@ public class TreasureBoxEvent : TileEvent
 
     public override void Exec(RPGSceneManager manager)
     {
-        if(manager.ActiveMap.FindMapObject(manager.CurrentEventTilePosition) == null) return;
+        if(manager.CurrentMap.FindMapObject(manager.CurrentEventTilePosition) == null) return;
         manager.StartCoroutine(OpenTreasure(manager));
     }
 
     IEnumerator OpenTreasure(RPGSceneManager manager)
     {
-        var treasureBox = manager.ActiveMap.FindMapObject(manager.CurrentEventTilePosition) as TreasureBox;
+        var treasureBox = manager.CurrentMap.FindMapObject(manager.CurrentEventTilePosition) as TreasureBox;
 
         var messageWindow = manager.MessageWindow;
         messageWindow.Params = null;

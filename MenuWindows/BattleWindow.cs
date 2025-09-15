@@ -50,7 +50,7 @@ public class BattleWindow : Menu
     public override void Open()
     {
         //var saveData = Object.FindObjectOfType<SaveData>();
-        //saveData.SaveTemporary(RPGSceneManager.ActiveMap);
+        //saveData.SaveTemporary(RPGSceneManager.CurrentMap);
         base.Open();
         MainCommands.Index = 0;
         DoEscape = false;
