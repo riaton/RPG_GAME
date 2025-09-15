@@ -29,19 +29,21 @@ public class ItemShopMenu : Menu
                 messageWindow.Params = null;
                 messageWindow.StartMessage(ItemShop.ItemCountOverMessage);
             }
-            else if (player.BattleParameter.Money - item.Money >= 0)
+            else if (player.BattleParameter.Money - item.Price >= 0)
             {
-                player.BattleParameter.Money -= item.Money;
-                if (item is Weapon)
+                player.BattleParameter.Money -= item.Price;
+                if (item is Equipment)
                 {
-                    var weapon = item as Weapon;
-                    switch (weapon.Kind)
+                    switch (item)
                     {
-                        case WeaponKind.Attack:
-                            player.BattleParameter.AttackWeapon = weapon;
+                        case Weapon weapon:
+                            player.BattleParameter.Weapon = weapon;
                             break;
-                        case WeaponKind.Defense:
-                            player.BattleParameter.DefenseWeapon = weapon;
+                        case Armor armor:
+                            player.BattleParameter.Armor = armor;
+                            break;
+                        default:
+                            Debug.LogError($"装備品が当てはまりません: {item.GetType().Name} - {item.Name}");
                             break;
                     }
                 }
@@ -49,14 +51,13 @@ public class ItemShopMenu : Menu
                 {
                     player.BattleParameter.Items.Add(item);
                 }
-
-                messageWindow.Params = new string[] { player.BattleParameter.Money.ToString(), item.Money.ToString() };
+                messageWindow.Params = new string[] { player.BattleParameter.Money.ToString(), item.Price.ToString() };
                 messageWindow.StartMessage(ItemShop.BuyMessage);
             }
             else
             {
                 messageWindow.Params = new string[] { player.BattleParameter.Money.ToString() };
-                messageWindow.StartMessage(ItemShop.NotEnoughMoneyMessage);
+                messageWindow.StartMessage(ItemShop.MoneyNotEnoughMessage);
             }
 
             StartCoroutine(WaitInput());
@@ -68,7 +69,7 @@ public class ItemShopMenu : Menu
         };
 
         EnableInput = false;
-        messageWindow.Params = new string[] { item.Name, item.Money.ToString() };
+        messageWindow.Params = new string[] { item.Name, item.Price.ToString() };
         messageWindow.StartMessage(ItemShop.AskBuyMessage);
     }
 

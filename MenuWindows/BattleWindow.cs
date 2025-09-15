@@ -14,8 +14,8 @@ public class BattleWindow : Menu
     [SerializeField] Text Description;
     [SerializeField] GameObject ParameterRoot;
 
-    [SerializeField] EncounterEnemies UseEncounter;
-    public EncounterEnemies Encounter { get; private set; }
+    [SerializeField] EnemyGroup UseEncounter;
+    public EnemyGroup Encounter { get; private set; }
 
     [SerializeField] Animator AttackEffectPrefab;
     Animator AttackEffect;
@@ -23,7 +23,7 @@ public class BattleWindow : Menu
     public BattleParameterBase Player { get => RPGSceneManager.Player.BattleParameter; }
     public RPGSceneManager GetRPGSceneManager { get => RPGSceneManager; }
 
-    public void SetUseEncounter(EncounterEnemies encounter) { UseEncounter = encounter; }
+    public void SetUseEncounter(EnemyGroup encounter) { UseEncounter = encounter; }
 
     void SetupEnemies()
     {
@@ -49,8 +49,8 @@ public class BattleWindow : Menu
     }
     public override void Open()
     {
-        var saveData = Object.FindObjectOfType<SaveData>();
-        saveData.SaveTemporary(RPGSceneManager.ActiveMap);
+        //var saveData = Object.FindObjectOfType<SaveData>();
+        //saveData.SaveTemporary(RPGSceneManager.ActiveMap);
         base.Open();
         MainCommands.Index = 0;
         DoEscape = false;
@@ -145,12 +145,12 @@ public class BattleWindow : Menu
             + $"<ANIMATION> 0 Attack"
             ;
         AttackEffect = Object.Instantiate(AttackEffectPrefab, CurrentItem.transform);
-        turnInfo.Effects = new Animator[] { AttackEffect };
+        turnInfo.Animations = new Animator[] { AttackEffect };
 
-        turnInfo.DoneCommand = () => {
-            var player = RPGSceneManager.Player.BattleParameter;
-            BattleParameterBase.AttackResult result;
-            var doKill = player.AttackTo(enemy.Data, out result);
+        turnInfo.Action = () => {
+            var player = RPGSceneManager.Player;
+            AttackResult result;
+            var doKill = player.Attack(enemy.BattleParameter, out result);
 
             var messageWindow = RPGSceneManager.MessageWindow;
             var resultMsg = $"{enemy.Name}に{result.Damage}を与えた！";
@@ -170,7 +170,7 @@ public class BattleWindow : Menu
     {
         var turnInfo = new TurnInfo();
         turnInfo.Message = "ぼうぎょした！";
-        turnInfo.DoneCommand = () => {
+        turnInfo.Action = () => {
             RPGSceneManager.Player.BattleParameter.IsNowDefense = true;
         };
         StartTurn(turnInfo);
@@ -186,7 +186,7 @@ public class BattleWindow : Menu
 
         var turnInfo = new TurnInfo();
         turnInfo.Message = $"{useItem.Name}を使った!";
-        turnInfo.DoneCommand = () =>
+        turnInfo.Action = () =>
         {
             var messageWindow = RPGSceneManager.MessageWindow;
             if (useItem is Weapon)
@@ -210,7 +210,7 @@ public class BattleWindow : Menu
     {
         var turnInfo = new TurnInfo();
         turnInfo.Message = "にげようとした！";
-        turnInfo.DoneCommand = () => {
+        turnInfo.Action = () => {
             var messageWindow = RPGSceneManager.MessageWindow;
             var rnd = new System.Random();
             DoEscape = (float)rnd.NextDouble() < Encounter.EscapeSuccessRate;
@@ -245,7 +245,7 @@ public class BattleWindow : Menu
         turnInfo.ShowMessageWindow(messageWindow);
         yield return new WaitWhile(() => !messageWindow.IsEndMessage);
         if (AttackEffect != null) { Object.Destroy(AttackEffect.gameObject); }
-        if (turnInfo.DoneCommand != null) turnInfo.DoneCommand();
+        if (turnInfo.Action != null) turnInfo.Action();
         yield return new WaitWhile(() => !messageWindow.IsEndMessage);
         UpdateUI();
 
@@ -261,7 +261,7 @@ public class BattleWindow : Menu
                 var info = enemy.BattleAction(this);
                 info.ShowMessageWindow(messageWindow);
                 yield return new WaitWhile(() => !messageWindow.IsEndMessage);
-                if (info.DoneCommand != null) info.DoneCommand();
+                if (info.Action != null) info.Action();
                 yield return new WaitWhile(() => !messageWindow.IsEndMessage);
                 UpdateUI();
             }
@@ -276,8 +276,8 @@ public class BattleWindow : Menu
         }
         else if (Encounter.Enemies.Count <= 0)
         {
-            var exp = UseEncounter.Enemies.Sum(_e => _e.Data.Exp);
-            var money = UseEncounter.Enemies.Sum(_e => _e.Data.Money);
+            var exp = UseEncounter.Enemies.Sum(_e => _e.BattleParameter.Exp);
+            var money = UseEncounter.Enemies.Sum(_e => _e.BattleParameter.Money);
             var msg = $"戦闘に勝った！\n"
                 + $"Exp+{exp}かくとく!\n"
                 + $"お金+${money}かくとく!";

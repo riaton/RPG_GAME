@@ -1,17 +1,14 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
+
 [CreateAssetMenu(menuName = "MassEvent/Life Recovery Event")]
-public class LifeRecoveryEvent : MassEvent
+public class LifeRecoveryEvent : TileEvent
 {
+    [Min(0)] public int Price = 50;
     [TextArea(3, 15)] public string Message;
-    [Min(0)] public int Money = 50;
-
     [TextArea(3, 15)] public string RecoveryMessage;
-    [TextArea(3, 15)] public string NotEnoughMoneyMessage;
-    [TextArea(3, 15)] public string NoMessage;
-
+    [TextArea(3, 15)] public string MoneyNotEnoughMessage;
+    [TextArea(3, 15)] public string CanceledMessage;
 
     public override void Exec(RPGSceneManager manager)
     {
@@ -19,29 +16,27 @@ public class LifeRecoveryEvent : MassEvent
         var yesNoMenu = messageWindow.YesNoMenu;
         yesNoMenu.YesAction = () =>
         {
-            var param = manager.Player.BattleParameter;
-            if (param.Money - Money >= 0)
+            var playerParameter = manager.Player.BattleParameter;
+            if (playerParameter.Money - Price >= 0)
             {
-                param.HP = param.MaxHP;
-                param.Money -= Money;
-
-                messageWindow.Params = new string[] { param.HP.ToString(), param.Money.ToString() };
+                playerParameter.HP = playerParameter.MaxHP;
+                playerParameter.Money -= Price;
                 messageWindow.StartMessage(RecoveryMessage);
             }
             else
             {
-                messageWindow.Params = new string[] { param.Money.ToString() };
-                messageWindow.StartMessage(NotEnoughMoneyMessage);
+                messageWindow.Params = new string[] { playerParameter.Money.ToString() };
+                messageWindow.StartMessage(MoneyNotEnoughMessage);
             }
         };
 
         yesNoMenu.NoAction = () =>
         {
             messageWindow.Params = null;
-            messageWindow.StartMessage(NoMessage);
+            messageWindow.StartMessage(CanceledMessage);
         };
 
-        messageWindow.Params = new string[] { Money.ToString() };
+        messageWindow.Params = new string[] { Price.ToString() };
         manager.ShowMessageWindow(Message);
     }
 }

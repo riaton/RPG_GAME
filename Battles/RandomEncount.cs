@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,24 +5,23 @@ using UnityEngine;
 public class RandomEncount : ScriptableObject
 {
     [System.Serializable]
-    public class Data
+    public class EncountEnemies
     {
         [Range(0, 1)] public float EncountRate;
-        public EncounterEnemies EncounterEnemies;
+        public EnemyGroup Enemies;
     }
+    [Range(0, 1)] public float EncountJudgeRate = 0.1f;
+    public List<EncountEnemies> EncountEnemiesList;
 
-    [Range(0, 1)] public float EncountRate = 0.2f;
-    public List<Data> List;
-
-    public EncounterEnemies Encount(System.Random rnd)
+    public EnemyGroup EncountJudge(System.Random rnd)
     {
-        if (EncountRate < rnd.NextDouble()) return null;
-        foreach (var d in List)
+        if (EncountJudgeRate < rnd.NextDouble()) return null;
+        foreach (var encountEnemies in EncountEnemiesList)
         {
             var t = rnd.NextDouble();
-            if (t < d.EncountRate)
+            if (t < encountEnemies.EncountRate)
             {
-                return d.EncounterEnemies;
+                return encountEnemies.Enemies;
             }
         }
         return null;

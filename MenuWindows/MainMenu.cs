@@ -1,8 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Linq;
 
 public class MainMenu : Menu
 {
@@ -14,14 +11,14 @@ public class MainMenu : Menu
     Item GetItem(BattleParameterBase param, int index)
     {
         int i = 0;
-        if (param.AttackWeapon != null)
+        if (param.Weapon != null)
         {
-            if (index == i) return param.AttackWeapon;
+            if (index == i) return param.Weapon;
             i++;
         }
-        if (param.DefenseWeapon != null)
+        if (param.Armor != null)
         {
-            if (index == i) return param.DefenseWeapon;
+            if (index == i) return param.Armor;
             i++;
         }
 
@@ -41,8 +38,8 @@ public class MainMenu : Menu
         if (item == null || item is Weapon) return;
         item.Use(player.BattleParameter);
         int offset = 0;
-        if (player.BattleParameter.AttackWeapon != null) offset++;
-        if (player.BattleParameter.DefenseWeapon != null) offset++;
+        if (player.BattleParameter.Weapon != null) offset++;
+        if (player.BattleParameter.Armor != null) offset++;
         player.BattleParameter.Items.RemoveAt(index - offset);
         UpdateUI();
     }
@@ -60,26 +57,6 @@ public class MainMenu : Menu
         UpdateDescription();
     }
 
-    public void Load()
-    {
-        StartCoroutine(LoadCoroutine());
-    }
- 
-    IEnumerator LoadCoroutine()
-    {
-        var saveData = Object.FindObjectOfType<SaveData>();
-        saveData.Load(RPGSceneManager);
- 
-        yield return new WaitWhile(() => saveData.NowLoading);
- 
-        EnableInput = false;
-        RPGSceneManager.MessageWindow.StartMessage(saveData.IsSuccessLoad ? "ロードしました。" : "ロードに失敗しました...");
- 
-        yield return new WaitUntil(() => RPGSceneManager.MessageWindow.IsEndMessage);
-        EnableInput = true;
-        Close();
-    }
-
     void UpdateItems()
     {
         //アイテムは6個までを上限と想定して作成しています。(武器+防具+アイテム4個)
@@ -92,16 +69,16 @@ public class MainMenu : Menu
         }
 
         int i = 0;
-        if (player.BattleParameter.AttackWeapon != null)
+        if (player.BattleParameter.Weapon != null)
         {
             menuItems[i].gameObject.SetActive(true);
-            menuItems[i].Text = player.BattleParameter.AttackWeapon.Name;
+            menuItems[i].Text = player.BattleParameter.Weapon.Name;
             i++;
         }
-        if (player.BattleParameter.DefenseWeapon != null)
+        if (player.BattleParameter.Armor != null)
         {
             menuItems[i].gameObject.SetActive(true);
-            menuItems[i].Text = player.BattleParameter.DefenseWeapon.Name;
+            menuItems[i].Text = player.BattleParameter.Armor.Name;
             i++;
         }
 
@@ -152,6 +129,7 @@ public class MainMenu : Menu
         }
     }
 
+/**
     public void Save()
     {
         StartCoroutine(SaveCoroutine());
@@ -168,4 +146,25 @@ public class MainMenu : Menu
         yield return new WaitUntil(() => RPGSceneManager.MessageWindow.IsEndMessage);
         EnableInput = true;
     }
+
+    public void Load()
+    {
+        StartCoroutine(LoadCoroutine());
+    }
+ 
+    IEnumerator LoadCoroutine()
+    {
+        var saveData = Object.FindObjectOfType<SaveData>();
+        saveData.Load(RPGSceneManager);
+ 
+        yield return new WaitWhile(() => saveData.NowLoading);
+ 
+        EnableInput = false;
+        RPGSceneManager.MessageWindow.StartMessage(saveData.IsSuccessLoad ? "ロードしました。" : "ロードに失敗しました...");
+ 
+        yield return new WaitUntil(() => RPGSceneManager.MessageWindow.IsEndMessage);
+        EnableInput = true;
+        Close();
+    }
+**/
 }

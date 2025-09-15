@@ -1,6 +1,3 @@
-//TitleMenu.cs TitleMenuコンポーネントの実装
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class TitleMenu : Menu
@@ -9,17 +6,19 @@ public class TitleMenu : Menu
 
     public void NewGame()
     {
-        var savedData = Object.FindObjectOfType<SaveData>();
-        savedData.ClearSave();
+        //var savedData = Object.FindObjectOfType<SaveData>();
+        //savedData.ClearSave();
         RPGSceneManager.StartGame();
 
     }
 
     public void Continue()
     {
-        StartCoroutine(Load());
+        //StartCoroutine(Load());
+        Debug.Log("Save function doesn't implemented.");
     }
 
+/**
     IEnumerator Load()
     {
         var savedData = Object.FindObjectOfType<SaveData>();
@@ -46,4 +45,5 @@ public class TitleMenu : Menu
         }
 
     }
+**/
 }

@@ -1,0 +1,18 @@
+### 概要
+- GetJoiningMap()
+  - このスクリプトがついているgameObjectの1階層上を探し、Mapクラスがあれば取得する→要確認
+- OnValidate()
+  - エディタ編集用。プレイヤーの初期位置を決める
+- Awake()
+  - RPGSceneManagerの初期化
+  - 現在キャラクターがいるMapに自分自身を追加する
+  - 初期方向のアニメーションをセットする
+- MoveCoroutine()
+  - 引数は目的地のタイル座標(Map.Grid基準)。それをワールド座標に変換し、transform.positionに設定する
+  - 指定時間かけて徐々に設定する
+- _posやPosに設定される座標はセル座標。transform.positionはワールド座標。移動時は_posやPosを使うが、全てワールド座標に変換される。
+- Pos(setter)
+  - setされたらMoveCoroutine()を呼び出してPosを更新する
+- SetPosNoCoroutine()
+  - ただPosを更新するだけ
+### レビュー結果

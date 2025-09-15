@@ -1,43 +1,117 @@
-﻿using GlobalSaveData = SaveData;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
 public class Map : MonoBehaviour
 {
-    public Grid Grid { get => GetComponent<Grid>(); }
+    public RandomEncount MapEncount;
     Dictionary<string, Tilemap> _tilemaps;
-
+    [SerializeField] List<TileEvent> _tileEvents;
+    HashSet<MapObjectBase> _mapObjects = new();
+    public Grid Grid { get => GetComponent<Grid>(); }
     readonly static string BACKGROND_TILEMAP_NAME = "Background";
-    readonly static string NONE_OBJECTS_TILEMAP_NAME = "NoneObjects";
     readonly static string OBJECTS_TILEMAP_NAME = "Objects";
     readonly static string EVENT_BOX_TILEMAP_NAME = "EventBox";
 
-    [SerializeField] List<MassEvent> _massEvents;
-
-    HashSet<CharacterBase> _characters = new HashSet<CharacterBase>();
-
-    public RandomEncount RandomEncount;
-    [System.Serializable]
-    public class InstantSaveData{
-        public List<string> characters = new List<string>();
+    private void Start()
+    {
+        //var saveData = Object.FindObjectOfType<GlobalSaveData>();
+        //saveData.LoadSaveData(this);
     }
+
+    private void Awake()
+    {
+        _tilemaps = new Dictionary<string, Tilemap>();
+        foreach (var tilemap in Grid.GetComponentsInChildren<Tilemap>())
+        {
+            _tilemaps.Add(tilemap.name, tilemap);
+            var renderer = tilemap.GetComponent<Renderer>();
+            tilemap.LocalToCell(renderer.bounds.min);
+            tilemap.LocalToCell(renderer.bounds.max);
+        }
+        //EventBoxを非表示にする
+        _tilemaps[EVENT_BOX_TILEMAP_NAME].gameObject.SetActive(false);
+        AddMapObject(Object.FindObjectOfType<Player>());
+    }
+
+    public void AddMapObject(MapObjectBase mapObject)
+    {
+        if (!_mapObjects.Contains(mapObject) && mapObject != null)
+        {
+            _mapObjects.Add(mapObject);
+        }
+    }
+
+    public MapObjectBase FindMapObject(Vector3Int position)
+    {
+        return _mapObjects.Where(_c => _c.IsActive).FirstOrDefault(_c => _c.Position == position);
+    }
+
+    public TileEvent FindTileEvent(TileBase tile)
+    {
+        return _tileEvents.Find(_c => _c.Tile == tile);
+    }
+
+    public bool FindTileEventPosition(TileBase tile, out Vector3Int position)
+    {
+        var eventLayer = _tilemaps[EVENT_BOX_TILEMAP_NAME];
+        var renderer = eventLayer.GetComponent<Renderer>();
+        var min = eventLayer.LocalToCell(renderer.bounds.min);
+        var max = eventLayer.LocalToCell(renderer.bounds.max);
+        position = Vector3Int.zero;
+        for (position.y = min.y; position.y < max.y; ++position.y)
+        {
+            for (position.x = min.x; position.x < max.x; ++position.x)
+            {
+                var t = eventLayer.GetTile(position);
+                if (t == tile) return true;
+            }
+        }
+        return false;
+    }
+
+    public Tile GetTile(Vector3Int position)
+    {
+        var tile = new Tile();
+        tile.eventBoxTile = _tilemaps[EVENT_BOX_TILEMAP_NAME].GetTile(position);
+        tile.isMovable = true;
+        tile.mapObject = FindMapObject(position);
+
+        if (tile.mapObject != null)
+        {
+            tile.isMovable = false;
+        }
+        else if (tile.eventBoxTile != null)
+        {
+            tile.tileEvent = FindTileEvent(tile.eventBoxTile);
+        }
+        else if (_tilemaps[OBJECTS_TILEMAP_NAME].GetTile(position))
+        {
+            tile.isMovable = false;
+        }
+        else if (_tilemaps[BACKGROND_TILEMAP_NAME].GetTile(position) == null)
+        {
+            tile.isMovable = false;
+        }
+        return tile;
+    }
+
+/**
     public InstantSaveData GetInstantSaveData(){
         var saveData = new InstantSaveData();
         saveData.characters = _characters.Select(_c => _c.GetInstantSaveData()).Where(_s => _s != null).Select(_s => JsonUtility.ToJson(_s)).ToList();
         return saveData;
     }
-    public CharacterBase GetCharacterId(string id)
-    {
-        return _characters.FirstOrDefault(_c => _c.IdentityKey == id);
+
+    [System.Serializable]
+    public class InstantSaveData{
+        public List<string> characters = new List<string>();
     }
 
-    private void Start()
+    public MapObjectBase GetCharacterId(string id)
     {
-        var saveData = Object.FindObjectOfType<GlobalSaveData>();
-        saveData.LoadSaveData(this);
+        return _mapObjects.FirstOrDefault(_c => _c.IdentityKey == id);
     }
 
     public void Load(InstantSaveData saveData)
@@ -47,7 +121,7 @@ public class Map : MonoBehaviour
  
             foreach (var json in saveData.characters)
             {
-                var data = JsonUtility.FromJson<CharacterBase.SaveData>(json);
+                var data = JsonUtility.FromJson<MapObjectBase.SaveData>(json);
                 if (data == null) continue;
  
                 var ch = GetCharacterId(data.id);
@@ -69,7 +143,7 @@ public class Map : MonoBehaviour
         {
             foreach (var json in saveData.characters)
             {
-                var data = JsonUtility.FromJson<CharacterBase.SaveData>(json);
+                var data = JsonUtility.FromJson<MapObjectBase.SaveData>(json);
                 if (data == null) continue;
  
                 var ch = GetCharacterId(data.id);
@@ -94,93 +168,13 @@ public class Map : MonoBehaviour
         saveData.characters = _characters.Where(_c => !(_c is Player)).Select(_c => _c.GetSaveData()).Where(_s => _s != null).Select(_s => JsonUtility.ToJson(_s)).ToList();
         return saveData;
     }
-    public void AddCharacter(CharacterBase character)
-    {
-        if (!_characters.Contains(character) && character != null)
-        {
-            _characters.Add(character);
-        }
-    }
+    **/
+}
 
-    public CharacterBase GetCharacter(Vector3Int pos)
-    {
-        return _characters.Where(_c => _c.IsActive).FirstOrDefault(_c => _c.Pos == pos);
-    }
-
-    public MassEvent FindMassEvent(TileBase tile)
-    {
-        return _massEvents.Find(_c => _c.Tile == tile);
-    }
-    public bool FindMassEventPos(TileBase tile, out Vector3Int pos)
-    {
-        var eventLayer = _tilemaps[EVENT_BOX_TILEMAP_NAME];
-        var renderer = eventLayer.GetComponent<Renderer>();
-        var min = eventLayer.LocalToCell(renderer.bounds.min);
-        var max = eventLayer.LocalToCell(renderer.bounds.max);
-        pos = Vector3Int.zero;
-        for (pos.y = min.y; pos.y < max.y; ++pos.y)
-        {
-            for (pos.x = min.x; pos.x < max.x; ++pos.x)
-            {
-                var t = eventLayer.GetTile(pos);
-                if (t == tile) return true;
-            }
-        }
-        return false;
-    }
-
-    private void Awake()
-    {
-        _tilemaps = new Dictionary<string, Tilemap>();
-        foreach (var tilemap in Grid.GetComponentsInChildren<Tilemap>())
-        {
-            _tilemaps.Add(tilemap.name, tilemap);
-            var renderer = tilemap.GetComponent<Renderer>();
-            var minCellPos = tilemap.LocalToCell(renderer.bounds.min);
-            var maxCellPos = tilemap.LocalToCell(renderer.bounds.max);
-        }
-
-        //EventBoxを非表示にする
-        _tilemaps[EVENT_BOX_TILEMAP_NAME].gameObject.SetActive(false);
-
-        AddCharacter(Object.FindObjectOfType<Player>());
-    }
-
-    public Vector3 GetWorldPos(Vector3Int pos)
-    {
-        return Grid.CellToWorld(pos);
-    }
-
-    public class Mass
-    {
-        public bool isMovable;
-        public TileBase eventTile;
-        public MassEvent massEvent;
-        public CharacterBase character;
-    }
-    public Mass GetMassData(Vector3Int pos)
-    {
-        var mass = new Mass();
-        mass.eventTile = _tilemaps[EVENT_BOX_TILEMAP_NAME].GetTile(pos);
-        mass.isMovable = true;
-        mass.character = GetCharacter(pos);
-
-        if (mass.character != null)
-        {
-            mass.isMovable = false;
-        }
-        else if (mass.eventTile != null)
-        {
-            mass.massEvent = FindMassEvent(mass.eventTile);
-        }
-        else if (_tilemaps[OBJECTS_TILEMAP_NAME].GetTile(pos))
-        {
-            mass.isMovable = false;
-        }
-        else if (_tilemaps[BACKGROND_TILEMAP_NAME].GetTile(pos) == null)
-        {
-            mass.isMovable = false;
-        }
-        return mass;
-    }
+public class Tile
+{
+    public bool isMovable;
+    public TileBase eventBoxTile;
+    public TileEvent tileEvent;
+    public MapObjectBase mapObject;
 }

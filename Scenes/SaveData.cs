@@ -1,4 +1,4 @@
-// SaveData.cs SaveDataコンポーネントの実装
+/**
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -139,3 +139,4 @@ public class SaveData : MonoBehaviour
         PlayerPrefs.SetString($"temp_map_{map.name.Replace("(Clone)", "")}", JsonUtility.ToJson(saveData));
     }
 }
+**/

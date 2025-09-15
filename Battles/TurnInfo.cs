@@ -7,14 +7,14 @@ public class TurnInfo
 {
     public string Message;
     public string[] Params;
-    public Animator[] Effects;
+    public Animator[] Animations;
 
-    public UnityAction DoneCommand;
+    public UnityAction Action;
 
     public void ShowMessageWindow(MessageWindow messageWindow)
     {
         messageWindow.Params = Params;
-        messageWindow.Effects = Effects;
+        messageWindow.Effects = Animations;
         messageWindow.StartMessage(Message);
     }
 }

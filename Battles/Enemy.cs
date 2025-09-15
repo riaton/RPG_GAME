@@ -1,29 +1,40 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "Enemy/Enemy")]
 public class Enemy : ScriptableObject
 {
-    public BattleParameterBase Data;
     public string Name;
+    public BattleParameterBase BattleParameter;
     public Sprite Sprite;
-
-    public EnemyAI UseEnemyAI;
+    public EnemyBehaviorBase EnemyBehavior;
 
     public virtual Enemy Clone()
     {
         var clone = ScriptableObject.CreateInstance<Enemy>();
-        clone.Data = new BattleParameterBase();
-        Data.CopyTo(clone.Data);
+        clone.BattleParameter = new BattleParameterBase();
+        BattleParameter.CopyTo(clone.BattleParameter);
         clone.Name = Name;
         clone.Sprite = Sprite;
-        clone.UseEnemyAI = UseEnemyAI.Clone();
+        clone.EnemyBehavior = EnemyBehavior.Clone();
         return clone;
     }
 
     public virtual TurnInfo BattleAction(BattleWindow battleWindow)
     {
-        return UseEnemyAI.BattleAction(this, battleWindow);
+        return EnemyBehavior.BattleAction(this, battleWindow);
+    }
+
+    public virtual bool Attack(BattleParameterBase target, out AttackResult result)
+    {
+        result = new AttackResult();
+
+        result.Damage = Mathf.Max(0, BattleParameter.AttackPower - target.DefensePower);
+        if (target.IsNowDefense)
+        {
+            result.Damage /= 2;
+        }
+        target.HP -= result.Damage;
+        result.LeaveHP = target.HP;
+        return target.HP <= 0;
     }
 }
